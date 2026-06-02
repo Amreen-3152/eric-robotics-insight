@@ -1,7 +1,0 @@
-After running the dashboard locally:
-1. Take a screenshot (Win+PrtScn / Cmd+Shift+4)
-2. Save it as: demo/screenshot.png
-3. Record a screen video if possible: demo/demo.mp4
-
-This demo folder should contain visual proof the dashboard runs on your machine.
-This is required by the ERIC Robotics submission guidelines.
