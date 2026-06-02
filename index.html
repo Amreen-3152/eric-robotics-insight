@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insight.IO — ERIC Robotics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#E8E8E6;
+  --sidebar:#15171A;
+  --card:#FFFFFF;
+  --border:rgba(0,0,0,0.1);
+  --text:#0F1011;
+  --muted:#7A7D85;
+  --green:#2ECC71;
+  --red:#E74C3C;
+  --amber:#F39C12;
+  --blue:#2980B9;
+  --yellow:#F5C518;
+  --yellow-dark:#D4A017;
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg)}
+
+/* ── APP SHELL ── */
+.app{display:flex;height:100vh;width:100vw}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:58px;background:var(--sidebar);
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 0;gap:2px;flex-shrink:0;z-index:20;
+  box-shadow:2px 0 12px rgba(0,0,0,0.25);
+}
+.logo-box{
+  width:38px;height:38px;background:#fff;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.logo-box svg{width:26px;height:26px}
+.nav-ic{
+  width:38px;height:38px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#555A65;transition:all .15s;
+}
+.nav-ic:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-ic.on{background:rgba(255,255,255,.11);color:#fff}
+.nav-ic svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav-gap{flex:1}
+.av{width:30px;height:30px;border-radius:50%;background:#2980B9;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:.5px}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:46px;background:var(--card);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:10px;
+  flex-shrink:0;z-index:15;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  background:#F4F4F2;border:1px solid var(--border);
+  border-radius:20px;padding:4px 10px 4px 8px;
+  font-size:11.5px;font-weight:500;cursor:pointer;
+  user-select:none;transition:background .15s;
+}
+.status-pill:hover{background:#EBEBEA}
+.s-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.p-btn{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;margin-left:2px;transition:background .15s;
+}
+.p-btn:hover{background:#ddd}
+.p-btn svg{width:9px;height:9px;fill:var(--muted)}
+.tb-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:16px}
+.tb-s{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500}
+.tb-s .lbl{color:var(--muted);font-weight:400}
+.tb-s .dot{width:7px;height:7px;border-radius:50%}
+
+/* battery */
+.batt-wrap{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;font-family:var(--mono)}
+.batt-body{width:26px;height:12px;border:1.5px solid #2a2a2a;border-radius:2px;padding:1.5px;position:relative}
+.batt-body::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:3px;height:6px;background:#2a2a2a;border-radius:0 1px 1px 0}
+.batt-fill{height:100%;border-radius:1px;background:var(--green);transition:width .6s,background .6s}
+
+/* signal icon */
+.sig-bars{display:flex;align-items:flex-end;gap:2px;height:12px}
+.sig-bar{width:3px;background:var(--blue);border-radius:1px}
+
+.tb-right{display:flex;align-items:center;gap:8px}
+.mode-group{display:flex;align-items:center;background:#F4F4F2;border:1px solid var(--border);border-radius:20px;padding:3px;gap:1px}
+.mode-lbl{font-size:10px;font-weight:600;color:var(--muted);padding:0 6px;letter-spacing:.04em}
+.m-btn{padding:3px 11px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--muted);letter-spacing:.05em;user-select:none}
+.m-btn.on{background:var(--sidebar);color:#fff}
+.init-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--sidebar);color:#fff;border:none;
+  border-radius:20px;padding:5px 14px;
+  font-size:11.5px;font-weight:700;cursor:pointer;
+  font-family:var(--font);letter-spacing:.06em;
+  transition:opacity .15s;
+}
+.init-btn:hover{opacity:.82}
+.init-btn svg{width:15px;height:15px;fill:currentColor}
+
+/* ── MAP VIEW ── */
+.map-area{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--bg);
+}
+
+/* 3D canvas fills map */
+#mapCanvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
+
+/* map label */
+.map-tag{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:4px 16px;
+  font-size:12px;font-weight:600;z-index:8;
+  pointer-events:none;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+/* quick goal */
+.qg{
+  position:absolute;top:10px;left:14px;
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:5px 12px;
+  font-size:11.5px;font-weight:700;cursor:pointer;z-index:8;
+  letter-spacing:.05em;transition:all .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.qg:hover{background:var(--sidebar);color:#fff}
+.qg svg{width:14px;height:14px;fill:currentColor}
+
+/* ── CAMERA PANEL ── */
+.cam-panel{position:absolute;bottom:14px;left:14px;z-index:10;display:flex;align-items:center;gap:0}
+.zoom-col{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:8px}
+.z-btn{
+  width:21px;height:21px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;font-weight:600;
+  color:var(--muted);line-height:1;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);transition:all .15s;
+}
+.z-btn:hover{background:var(--sidebar);color:#fff}
+.z-track{width:3px;height:48px;background:rgba(0,0,0,.12);border-radius:2px;position:relative;margin:0 auto}
+.z-thumb{
+  width:10px;height:10px;background:var(--sidebar);
+  border-radius:50%;position:absolute;
+  left:50%;transform:translateX(-50%);top:30%;
+  cursor:pointer;transition:top .2s;
+}
+.cam-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;width:215px;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.cam-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 9px;background:#0F1011;
+  font-size:9.5px;font-weight:600;color:#fff;
+  letter-spacing:.08em;font-family:var(--mono);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1s infinite}
+.live-row{display:flex;align-items:center;gap:4px;font-size:9px}
+.cam-body{width:100%;height:126px;background:#111;position:relative;overflow:hidden}
+#camCanvas{width:100%!important;height:100%!important;display:block}
+.cam-ts{
+  position:absolute;bottom:4px;right:6px;
+  font-family:var(--mono);font-size:9px;
+  color:rgba(255,255,255,.5);
+}
+.cam-recs{position:absolute;top:5px;left:6px;display:flex;gap:4px}
+.rec-tag{
+  font-size:8px;font-weight:600;letter-spacing:.06em;
+  padding:1px 5px;border-radius:3px;font-family:var(--mono);
+}
+
+/* ── CONTROLS ── */
+.ctrl-panel{
+  position:absolute;right:14px;bottom:14px;
+  z-index:10;display:flex;flex-direction:column;
+  align-items:center;gap:10px;
+}
+
+/* E-STOP */
+.estop{
+  width:70px;height:70px;border-radius:50%;
+  background:var(--yellow);border:4px solid var(--yellow-dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;user-select:none;
+  box-shadow:0 0 0 3px rgba(245,197,24,.22),0 5px 15px rgba(0,0,0,.18);
+  transition:transform .1s,box-shadow .1s;
+}
+.estop:hover{transform:scale(1.04);box-shadow:0 0 0 5px rgba(245,197,24,.28),0 5px 15px rgba(0,0,0,.2)}
+.estop:active{transform:scale(.95)}
+.estop-ring{
+  width:38px;height:38px;border-radius:50%;
+  border:3px solid var(--red);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.estop-ring::before{
+  content:'';position:absolute;
+  width:100%;height:100%;border-radius:50%;
+  border:3px solid var(--red);
+  animation:estop-spin 3s linear infinite;
+  border-top-color:transparent;border-right-color:transparent;
+}
+@keyframes estop-spin{to{transform:rotate(360deg)}}
+.estop-inner svg{width:18px;height:18px}
+.estop-lbl{font-size:7.5px;font-weight:800;color:#111;letter-spacing:.1em;margin-top:3px;text-transform:uppercase}
+
+/* DPAD */
+.dpad-wrap{
+  width:86px;height:86px;border-radius:50%;
+  background:var(--sidebar);
+  display:grid;
+  grid-template-areas:'_  up  _''lf ct rt''_  dn  _';
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:1fr 1fr 1fr;
+  padding:3px;gap:2px;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
+.dp{
+  border-radius:4px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;
+  background:rgba(255,255,255,.07);color:#fff;
+  transition:background .1s;
+}
+.dp:hover{background:rgba(255,255,255,.16)}
+.dp:active{background:rgba(255,255,255,.3)}
+.dp svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.dp-ct{
+  background:rgba(255,255,255,.04)!important;cursor:default;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;
+}
+.dp-ct .k1{font-size:10px;color:rgba(255,255,255,.55)}
+.dp-ct .k2{font-size:7.5px;color:rgba(255,255,255,.3);font-family:var(--mono)}
+
+/* ── HOVER TOOLTIP on robot ── */
+.robot-tip{
+  position:absolute;background:rgba(15,16,17,.9);color:#fff;
+  border-radius:7px;padding:7px 11px;font-size:11px;
+  white-space:nowrap;z-index:20;pointer-events:none;
+  opacity:0;transition:opacity .2s;
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(4px);
+}
+.robot-tip.show{opacity:1}
+
+/* ── TOASTS ── */
+.toasts{
+  position:absolute;top:54px;right:12px;
+  z-index:40;display:flex;flex-direction:column;
+  gap:5px;pointer-events:none;
+}
+.toast{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:7px 12px;
+  font-size:11.5px;font-weight:500;
+  display:flex;align-items:center;gap:7px;
+  box-shadow:0 3px 12px rgba(0,0,0,.09);
+  animation:tIn .25s ease;pointer-events:auto;
+}
+@keyframes tIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="logo-box">
+    <svg viewBox="0 0 26 26" fill="none">
+      <text x="2" y="20" font-size="15" font-weight="800" font-family="DM Sans,sans-serif" fill="#0F1011">E</text>
+      <text x="11" y="20" font-size="10" font-weight="800" font-family="DM Sans,sans-serif" fill="#2980B9">R</text>
+    </svg>
+  </div>
+  <div class="nav-ic on" title="Dashboard">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+  </div>
+  <div class="nav-ic" title="Map">
+    <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+  </div>
+  <div class="nav-ic" title="Waypoints">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+  </div>
+  <div class="nav-ic" title="Robot Status">
+    <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1.5"/><circle cx="7.5" cy="13.5" r="1.2"/><circle cx="16.5" cy="13.5" r="1.2"/></svg>
+  </div>
+  <div class="nav-ic" title="Schedule">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </div>
+  <div class="nav-ic" title="Analytics">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  </div>
+  <div class="nav-gap"></div>
+  <div class="av" title="Profile">AS</div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <!-- Status -->
+    <div class="status-pill" onclick="toggleMission()">
+      <div class="s-dot" id="sDot"></div>
+      <span id="sLabel" style="color:#0F1011">On Mission 1234</span>
+      <div class="p-btn" title="Pause">
+        <svg viewBox="0 0 9 11"><rect x=".5" y=".5" width="2.5" height="10" rx="1"/><rect x="6" y=".5" width="2.5" height="10" rx="1"/></svg>
+      </div>
+    </div>
+
+    <!-- Center stats -->
+    <div class="tb-mid">
+      <!-- Battery -->
+      <div class="batt-wrap">
+        <div class="batt-body"><div class="batt-fill" id="battF" style="width:100%"></div></div>
+        <span id="battT">100%</span>
+      </div>
+      <!-- Signal -->
+      <div class="tb-s">
+        <div class="sig-bars">
+          <div class="sig-bar" style="height:4px"></div>
+          <div class="sig-bar" style="height:7px"></div>
+          <div class="sig-bar" style="height:10px"></div>
+          <div class="sig-bar" style="height:12px"></div>
+        </div>
+        <span>Strong</span>
+      </div>
+      <!-- Failsafe -->
+      <div class="tb-s">
+        <div class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div>
+        <span class="lbl">Failsafe</span><span>Okay</span>
+      </div>
+      <!-- System -->
+      <div class="tb-s">
+        <div class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div>
+        <span class="lbl">System</span><span>Okay</span>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="tb-right">
+      <div class="mode-group">
+        <span class="mode-lbl">MODE</span>
+        <div class="m-btn on" id="mA" onclick="setMode('AUTO',this)">AUTO</div>
+        <div class="m-btn" id="mM" onclick="setMode('MANUAL',this)">MANUAL</div>
+      </div>
+      <button class="init-btn" onclick="initMission()">
+        INITIATE
+        <svg viewBox="0 0 15 15"><path d="M7.5 1.5a6 6 0 100 12 6 6 0 000-12zm2.8 6.5l-3.8 2.4a.5.5 0 01-.75-.43V5.03a.5.5 0 01.75-.43l3.8 2.38a.5.5 0 010 .87z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAP AREA -->
+  <div class="map-area" id="mapArea">
+    <!-- 3D point cloud map -->
+    <canvas id="mapCanvas"></canvas>
+
+    <!-- Overlays -->
+    <div class="map-tag">Map View</div>
+    <div class="qg" onclick="quickGoal()">
+      QUICK GOAL
+      <svg viewBox="0 0 15 15"><path d="M7.5 1.5a6 6 0 100 12 6 6 0 000-12zm2.8 6.5l-3.8 2.4a.5.5 0 01-.75-.43V5.03a.5.5 0 01.75-.43l3.8 2.38a.5.5 0 010 .87z"/></svg>
+    </div>
+
+    <!-- Robot tooltip -->
+    <div class="robot-tip" id="robotTip">
+      Robot-01 &nbsp;·&nbsp; Mission 1234<br>
+      <span style="font-size:10px;color:rgba(255,255,255,.55)">Pos: 42.3, 18.7 &nbsp;·&nbsp; Speed: 0.8 m/s</span>
+    </div>
+
+    <!-- CAMERA PANEL -->
+    <div class="cam-panel">
+      <div class="zoom-col">
+        <div class="z-btn" onclick="doZoom(1)">+</div>
+        <div class="z-track"><div class="z-thumb" id="zThumb"></div></div>
+        <div class="z-btn" onclick="doZoom(-1)">−</div>
+      </div>
+      <div class="cam-card">
+        <div class="cam-hdr">
+          <span>CAM — FRONT</span>
+          <div class="live-row"><div class="live-dot"></div>LIVE</div>
+        </div>
+        <div class="cam-body">
+          <canvas id="camCanvas"></canvas>
+          <div class="cam-recs">
+            <div class="rec-tag" style="background:rgba(231,76,60,.85);color:#fff">● REC</div>
+          </div>
+          <div class="cam-ts" id="camTs">00:00:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="ctrl-panel">
+      <!-- E-STOP -->
+      <div class="estop" onclick="eStop()" title="Emergency Stop [Space]">
+        <div class="estop-ring">
+          <div class="estop-inner">
+            <svg viewBox="0 0 18 18" fill="none">
+              <path d="M5 9 L9 4 L13 9" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+              <rect x="7" y="9" width="4" height="6" rx=".8" fill="white"/>
+            </svg>
+          </div>
+        </div>
+        <div class="estop-lbl">STOP</div>
+      </div>
+
+      <!-- DPAD -->
+      <div class="dpad-wrap">
+        <div style="grid-area:_"></div>
+        <div class="dp" style="grid-area:up" onclick="move('up')" title="W / ↑">
+          <svg viewBox="0 0 11 11"><polyline points="1.5,8 5.5,3.5 9.5,8"/></svg>
+        </div>
+        <div style="grid-area:_"></div>
+        <div class="dp" style="grid-area:lf" onclick="move('left')" title="A / ←">
+          <svg viewBox="0 0 11 11"><polyline points="8,1.5 3.5,5.5 8,9.5"/></svg>
+        </div>
+        <div class="dp dp-ct" style="grid-area:ct">
+          <span class="k1">⊕</span><span class="k2">key</span>
+        </div>
+        <div class="dp" style="grid-area:rt" onclick="move('right')" title="D / →">
+          <svg viewBox="0 0 11 11"><polyline points="3.5,1.5 8,5.5 3.5,9.5"/></svg>
+        </div>
+        <div style="grid-area:_"></div>
+        <div class="dp" style="grid-area:dn" onclick="move('down')" title="S / ↓">
+          <svg viewBox="0 0 11 11"><polyline points="1.5,3.5 5.5,8 9.5,3.5"/></svg>
+        </div>
+        <div style="grid-area:_"></div>
+      </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toasts" id="toasts"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let running = true, mode = 'AUTO';
+let battery = 100, zoomLvl = 30;
+let robotAngle = 0;
+
+// ═══════════════════════════════════════════
+//  3D MAP — THREE.JS POINT CLOUD FLOOR PLAN
+// ═══════════════════════════════════════════
+(function initMap() {
+  const canvas = document.getElementById('mapCanvas');
+  const area   = document.getElementById('mapArea');
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0xE8E8E6, 1);
+
+  const scene = new THREE.Scene();
+
+  // Orthographic-ish perspective (like the reference — looking down at a tilt)
+  const cam = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
+  cam.position.set(0, 55, 42);
+  cam.lookAt(0, 0, 0);
+
+  // ── FLOOR (white base) ──
+  const floorGeo = new THREE.PlaneGeometry(60, 50);
+  const floorMat = new THREE.MeshBasicMaterial({ color: 0xF8F8F8 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  // ── WALLS (dark border lines) ──
+  function wall(x1,z1,x2,z2,h=2.5){
+    const dir = new THREE.Vector3(x2-x1, 0, z2-z1);
+    const len = dir.length();
+    const geo = new THREE.BoxGeometry(len, h, 0.25);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x1A1A1A });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set((x1+x2)/2, h/2, (z1+z2)/2);
+    m.lookAt(new THREE.Vector3(x2, h/2, z2));
+    scene.add(m);
+  }
+  // Outer walls
+  wall(-25,-22, 22,-22); // bottom
+  wall(-25, 22, 22, 22); // top
+  wall(-25,-22,-25, 22); // left
+  wall( 22,-22, 22, 22); // right
+  // Inner walls
+  wall(-2,-22,-2, 22,1.5);  // vertical divider
+  wall(-2, 2, 22, 2, 1.2);  // horizontal mid
+  wall(-2,-8, 22,-8, 1.2);  // horizontal lower
+  wall( 8,-22, 8,-8, 1.2);  // short vertical
+
+  // ── PINK ZONES (restricted areas) ──
+  function pinkZone(x,z,w,d,opacity=0.35){
+    const geo = new THREE.PlaneGeometry(w,d);
+    const mat = new THREE.MeshBasicMaterial({ color:0xE8A0B4, transparent:true, opacity, side:THREE.DoubleSide });
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.x = -Math.PI/2;
+    m.position.set(x, 0.02, z);
+    scene.add(m);
+  }
+  pinkZone(-13.5,-10, 23, 24, 0.3);
+  pinkZone(10, 0, 22, 8, 0.28);
+  pinkZone(10,-15, 14,12, 0.25);
+  pinkZone(-13,-5, 22,30, 0.15);
+
+  // ── LIDAR SCAN POINTS (black dots scattered) ──
+  const scanPositions = [];
+  // Wall perimeter scan points
+  for(let i=0;i<120;i++){
+    const t = i/120 * Math.PI*2;
+    const rx = 24*Math.cos(t), rz = 22*Math.sin(t);
+    const jx = (Math.random()-.5)*2.5, jz = (Math.random()-.5)*2.5;
+    scanPositions.push(rx+jx, 0.08, rz+jz);
+  }
+  // Interior scatter
+  for(let i=0;i<200;i++){
+    scanPositions.push(
+      (Math.random()-.5)*46,
+      0.08,
+      (Math.random()-.5)*42
+    );
+  }
+  // Dense wall clusters
+  const wallClusters = [
+    [-2,-22],[-2,22],[22,0],[-25,0],[0,-22],[0,22],
+    [8,-15],[8,-8],[22,2],[22,-8],[-2,2],[-2,-8]
+  ];
+  wallClusters.forEach(([cx,cz])=>{
+    for(let i=0;i<12;i++){
+      scanPositions.push(cx+(Math.random()-.5)*3, 0.08, cz+(Math.random()-.5)*3);
+    }
+  });
+
+  const scanGeo = new THREE.BufferGeometry();
+  scanGeo.setAttribute('position', new THREE.Float32BufferAttribute(scanPositions, 3));
+  const scanMat = new THREE.PointsMaterial({ color:0x111111, size:0.28, sizeAttenuation:true });
+  scene.add(new THREE.Points(scanGeo, scanMat));
+
+  // ── RED SCAN ARTIFACTS (edge highlights) ──
+  const redPos = [];
+  for(let i=0;i<80;i++){
+    redPos.push((Math.random()-.5)*44, 0.09, (Math.random()-.5)*40);
+  }
+  const redGeo = new THREE.BufferGeometry();
+  redGeo.setAttribute('position', new THREE.Float32BufferAttribute(redPos, 3));
+  const redMat = new THREE.PointsMaterial({ color:0xCC2222, size:0.22, sizeAttenuation:true, transparent:true, opacity:0.55 });
+  scene.add(new THREE.Points(redGeo, redMat));
+
+  // ── ROBOT ──
+  const robotGroup = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.BoxGeometry(2.2, 0.9, 3.0);
+  const bodyMat = new THREE.MeshLambertMaterial({ color:0x1A1A1A });
+  robotGroup.add(new THREE.Mesh(bodyGeo, bodyMat));
+
+  // Wheels
+  const wheelGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.35, 16);
+  const wheelMat = new THREE.MeshLambertMaterial({ color:0x333333 });
+  [[-1.3,0,-1],[-1.3,0,1],[1.3,0,-1],[1.3,0,1]].forEach(([x,y,z])=>{
+    const w = new THREE.Mesh(wheelGeo, wheelMat);
+    w.rotation.z = Math.PI/2;
+    w.position.set(x,y,z);
+    robotGroup.add(w);
+  });
+
+  // Wifi antenna
+  const antGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8);
+  const antMat = new THREE.MeshLambertMaterial({ color:0x444 });
+  const ant = new THREE.Mesh(antGeo, antMat);
+  ant.position.set(0.5, 1.05, -0.5);
+  robotGroup.add(ant);
+
+  // Sensor dome
+  const domeGeo = new THREE.SphereGeometry(0.4, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
+  const domeMat = new THREE.MeshLambertMaterial({ color:0x555, transparent:true, opacity:0.8 });
+  const dome = new THREE.Mesh(domeGeo, domeMat);
+  dome.position.set(0, 0.85, 0);
+  robotGroup.add(dome);
+
+  robotGroup.position.set(-4, 0.5, -2);
+  scene.add(robotGroup);
+
+  // Robot shadow ring
+  const ringGeo = new THREE.RingGeometry(1.8, 2.2, 32);
+  const ringMat = new THREE.MeshBasicMaterial({ color:0x2980B9, transparent:true, opacity:0.4, side:THREE.DoubleSide });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI/2;
+  ring.position.set(-4, 0.05, -2);
+  scene.add(ring);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+  sun.position.set(20, 40, 20);
+  scene.add(sun);
+
+  // ── RESIZE ──
+  function resize() {
+    const W = area.clientWidth, H = area.clientHeight;
+    renderer.setSize(W, H, false);
+    cam.aspect = W / H;
+    cam.updateProjectionMatrix();
+  }
+  resize();
+  new ResizeObserver(resize).observe(area);
+
+  // ── ROBOT AUTO MOVE ──
+  let rX = -4, rZ = -2;
+  let tX = rX, tZ = rZ;
+  let moveTimer = 0;
+
+  function newTarget() {
+    tX = (Math.random() - .5) * 38;
+    tZ = (Math.random() - .5) * 32;
+  }
+  newTarget();
+
+  // Camera orbit state
+  let camTheta = 0.85, camPhi = 0.78, camR = 72;
+  let isDragging = false, lastMX = 0, lastMY = 0;
+
+  area.addEventListener('mousedown', e => { isDragging = true; lastMX = e.clientX; lastMY = e.clientY; });
+  window.addEventListener('mouseup', () => isDragging = false);
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    camTheta -= (e.clientX - lastMX) * 0.008;
+    camPhi   -= (e.clientY - lastMY) * 0.006;
+    camPhi = Math.max(0.3, Math.min(1.3, camPhi));
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  area.addEventListener('wheel', e => {
+    camR = Math.max(25, Math.min(120, camR + e.deltaY * 0.05));
+  });
+
+  // Expose robot pos for tooltip
+  window._robotGroup = robotGroup;
+  window._ring = ring;
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // Move robot
+    if (window._running !== false) {
+      if (window._mode === 'AUTO') {
+        moveTimer++;
+        if (moveTimer > 120) { newTarget(); moveTimer = 0; }
+        rX += (tX - rX) * 0.02;
+        rZ += (tZ - rZ) * 0.02;
+      }
+    }
+    robotGroup.position.set(rX, 0.5, rZ);
+    ring.position.set(rX, 0.05, rZ);
+
+    // Robot faces direction of travel
+    const dx = tX - rX, dz = tZ - rZ;
+    if (Math.abs(dx) + Math.abs(dz) > 0.05) {
+      robotGroup.rotation.y = Math.atan2(dx, dz);
+    }
+
+    // Manual movement
+    if (window._manualDelta) {
+      const d = window._manualDelta;
+      rX += d.x; rZ += d.z;
+      rX = Math.max(-22, Math.min(20, rX));
+      rZ = Math.max(-20, Math.min(20, rZ));
+      window._manualDelta = null;
+    }
+
+    // Camera orbit
+    cam.position.x = camR * Math.sin(camPhi) * Math.sin(camTheta);
+    cam.position.y = camR * Math.cos(camPhi);
+    cam.position.z = camR * Math.sin(camPhi) * Math.cos(camTheta);
+    cam.lookAt(0, 0, 0);
+
+    renderer.render(scene, cam);
+  }
+  animate();
+})();
+
+// ═══════════════════════════════════════════
+//  CAMERA VIEW — THREE.JS WAREHOUSE SCENE
+// ═══════════════════════════════════════════
+(function initCam() {
+  const canvas = document.getElementById('camCanvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(215, 126);
+  renderer.shadowMap.enabled = true;
+  renderer.setClearColor(0x181818);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1C1C1C);
+  scene.fog = new THREE.FogExp2(0x1C1C1C, 0.045);
+
+  const cam = new THREE.PerspectiveCamera(68, 215/126, 0.1, 80);
+  cam.position.set(0, 1.4, 4.5);
+  cam.lookAt(0, 0.6, 0);
+
+  // Floor
+  const fl = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 30),
+    new THREE.MeshLambertMaterial({ color: 0x5A4535 })
+  );
+  fl.rotation.x = -Math.PI / 2;
+  scene.add(fl);
+
+  // Back wall
+  scene.add(Object.assign(new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 6),
+    new THREE.MeshLambertMaterial({ color: 0xBFA882 })
+  ), { position: new THREE.Vector3(0, 3, -4) }));
+
+  // Left wall
+  const wallL = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 6),
+    new THREE.MeshLambertMaterial({ color: 0xAA9470 })
+  );
+  wallL.rotation.y = Math.PI / 2;
+  wallL.position.set(-5, 3, 0);
+  scene.add(wallL);
+
+  // Safety fence — yellow metal
+  const yMat = new THREE.MeshLambertMaterial({ color: 0xF5A623 });
+  const postGeo = new THREE.BoxGeometry(0.1, 1.4, 0.1);
+
+  [-1.8, -0.9, 0.0, 0.9, 1.8].forEach(x => {
+    const p = new THREE.Mesh(postGeo, yMat);
+    p.position.set(x, 0.7, 0.8);
+    scene.add(p);
+  });
+
+  // Horizontal rails
+  [0.2, 1.2].forEach(y => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(3.78, 0.08, 0.08), yMat);
+    rail.position.set(0, y, 0.8);
+    scene.add(rail);
+  });
+
+  // Boxes / pallets
+  [
+    [0.7, 0.2, 1.5, 0.5, 0.3, 0.6, 0x8B7355],
+    [1.4, 0.18, 1.0, 0.4, 0.3, 0.5, 0x6B5543],
+    [-0.7, 0.15, 1.6, 0.45, 0.25, 0.45, 0x9A8465],
+    [2.0, 0.1, 1.8, 0.6, 0.2, 0.4, 0x7A6A55],
+  ].forEach(([x,h,z,w,dh,d,c]) => {
+    const b = new THREE.Mesh(
+      new THREE.BoxGeometry(w, dh*2, d),
+      new THREE.MeshLambertMaterial({ color: c })
+    );
+    b.position.set(x, h, z);
+    scene.add(b);
+  });
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const dl = new THREE.DirectionalLight(0xFFEECC, 0.9);
+  dl.position.set(3, 6, 4);
+  scene.add(dl);
+  const pl = new THREE.PointLight(0xFFF3DC, 0.7, 12);
+  pl.position.set(0, 4, 2);
+  scene.add(pl);
+
+  let t = 0;
+  function animateCam() {
+    requestAnimationFrame(animateCam);
+    t += 0.004;
+    cam.position.x = Math.sin(t * 0.4) * 0.18;
+    cam.position.y = 1.4 + Math.sin(t * 0.7) * 0.05;
+    cam.lookAt(Math.sin(t * 0.3) * 0.08, 0.55, 0);
+    renderer.render(scene, cam);
+  }
+  animateCam();
+})();
+
+// ═══════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════
+setInterval(() => {
+  const n = new Date();
+  const ts = [n.getHours(), n.getMinutes(), n.getSeconds()]
+    .map(v => String(v).padStart(2,'0')).join(':');
+  const el = document.getElementById('camTs');
+  if (el) el.textContent = ts;
+}, 1000);
+
+// ═══════════════════════════════════════════
+//  BATTERY DRAIN
+// ═══════════════════════════════════════════
+setInterval(() => {
+  if (!running) return;
+  battery = Math.max(5, battery - 0.012);
+  const p = Math.round(battery);
+  document.getElementById('battT').textContent = p + '%';
+  const f = document.getElementById('battF');
+  f.style.width = p + '%';
+  f.style.background = p > 50 ? 'var(--green)' : p > 25 ? 'var(--amber)' : 'var(--red)';
+}, 500);
+
+// ═══════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════
+window._running = true;
+window._mode = 'AUTO';
+
+function toggleMission() {
+  running = !running;
+  window._running = running;
+  const dot = document.getElementById('sDot');
+  const lbl = document.getElementById('sLabel');
+  dot.style.background = running ? 'var(--green)' : 'var(--amber)';
+  lbl.textContent = running ? 'On Mission 1234' : 'Mission Paused';
+  toast(running ? 'Mission resumed' : 'Mission paused', running ? '#2ECC71' : '#F39C12');
+}
+
+function setMode(m, el) {
+  mode = m;
+  window._mode = m;
+  document.getElementById('mA').classList.toggle('on', m === 'AUTO');
+  document.getElementById('mM').classList.toggle('on', m === 'MANUAL');
+  toast('Mode: ' + m, '#2980B9');
+}
+
+function initMission() {
+  running = true;
+  window._running = true;
+  document.getElementById('sDot').style.background = 'var(--green)';
+  document.getElementById('sLabel').textContent = 'On Mission 1234';
+  toast('New mission initiated!', '#2ECC71');
+}
+
+function quickGoal() {
+  toast('Quick goal set — navigating...', '#2980B9');
+}
+
+function eStop() {
+  running = false;
+  window._running = false;
+  document.getElementById('sDot').style.background = 'var(--red)';
+  document.getElementById('sLabel').textContent = 'EMERGENCY STOPPED';
+  toast('⚠ EMERGENCY STOP', '#E74C3C');
+}
+
+function move(dir) {
+  const s = 0.8;
+  const d = { x: 0, z: 0 };
+  if (dir === 'up')    d.z = -s;
+  if (dir === 'down')  d.z =  s;
+  if (dir === 'left')  d.x = -s;
+  if (dir === 'right') d.x =  s;
+  window._manualDelta = d;
+  toast('Manual: ' + dir, '#2980B9');
+}
+
+let zl = 30;
+function doZoom(d) {
+  zl = Math.max(0, Math.min(100, zl + d * 12));
+  const t = document.getElementById('zThumb');
+  if (t) t.style.top = (100 - zl) + '%';
+}
+
+// ── TOAST ──
+function toast(msg, color) {
+  const area = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="t-dot" style="background:${color}"></div><span>${msg}</span>`;
+  area.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0'; el.style.transition = 'opacity .3s';
+    setTimeout(() => el.remove(), 300);
+  }, 2500);
+}
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp'    || e.key === 'w' || e.key === 'W') move('up');
+  if (e.key === 'ArrowDown'  || e.key === 's' || e.key === 'S') move('down');
+  if (e.key === 'ArrowLeft'  || e.key === 'a' || e.key === 'A') move('left');
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') move('right');
+  if (e.key === ' ') { e.preventDefault(); eStop(); }
+});
+</script>
+</body>
+</html>

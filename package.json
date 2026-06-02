@@ -1,0 +1,11 @@
+{
+  "name": "eric-robotics-insight-dashboard",
+  "version": "1.0.0",
+  "description": "Insight.IO Dashboard — ERIC Robotics Assignment by Amreen Shaikh",
+  "scripts": {
+    "start": "npx serve . -p 8080",
+    "dev": "npx live-server --port=8080"
+  },
+  "author": "Amreen Shaikh",
+  "license": "MIT"
+}
